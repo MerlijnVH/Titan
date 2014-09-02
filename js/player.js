@@ -1,318 +1,205 @@
-Player = function ( object, domElement )
-{
-	this.object = object;
-	this.target = new THREE.Vector3( 0, 0, 0 );
+Player = function ( camera ) {
+	var scope = this;
 
-	this.domElement = ( domElement !== undefined ) ? domElement : document;
+	camera.rotation.set( 0, 0, 0 );
 
-	this.movementSpeed = 1.0;
-	this.lookSpeed = 0.005;
+	var pitchObject = new THREE.Object3D();
+	pitchObject.add( camera );
 
-	this.lookVertical = true;
-	this.autoForward = false;
-	// this.invertVertical = false;
+	var yawObject = new THREE.Object3D();
+	yawObject.position.y = 10;
+	yawObject.add( pitchObject );
 
-	this.activeLook = true;
+	var moveForward = false;
+	var moveBackward = false;
+	var moveLeft = false;
+	var moveRight = false;
 
-	this.heightSpeed = false;
-	this.heightCoef = 1.0;
-	this.heightMin = 0.0;
-	this.heightMax = 1.0;
+	var isOnObject = false;
+	var canJump = false;
 
-	this.constrainVertical = false;
-	this.verticalMin = 0;
-	this.verticalMax = Math.PI;
+	var isBlockedX = false;
+	var isBlockedZ = false;
 
-	this.autoSpeedFactor = 0.0;
+	var prevTime = performance.now();
 
-	this.mouseX = 0;
-	this.mouseY = 0;
+	var velocity = new THREE.Vector3();
 
-	this.lat = 0;
-	this.lon = 0;
-	this.phi = 0;
-	this.theta = 0;
+	var PI_2 = Math.PI / 2;
 
-	this.moveForward = false;
-	this.moveBackward = false;
-	this.moveLeft = false;
-	this.moveRight = false;
-	this.freeze = false;
+	var onMouseMove = function ( event ) {
 
-	this.lookLeft = false;
-	this.lookRight = false;
+	//	if ( scope.enabled === false ) return;
 
-	this.mouseDragOn = false;
+	var movementX = event.movementX || event.mozMovementX || event.webkitMovementX || 0;
+	var movementY = event.movementY || event.mozMovementY || event.webkitMovementY || 0;
 
-	this.viewHalfX = 0;
-	this.viewHalfY = 0;
+	yawObject.rotation.y -= movementX * 0.002;
+	pitchObject.rotation.x -= movementY * 0.002;
 
-	this.velocity = 0;
+	pitchObject.rotation.x = Math.max( - PI_2, Math.min( PI_2, pitchObject.rotation.x ) );
 
-	var position = new THREE.Vector3( 0, 0, 0 );
-	var previousPosition = new THREE.Vector3( 0, 0, 0 );
+};
 
-	if ( this.domElement !== document ) {
+var onKeyDown = function ( event ) {
 
-		this.domElement.setAttribute( 'tabindex', -1 );
+	switch ( event.keyCode ) {
 
-	}
+			case 38: // up
+			case 87: // w
+			moveForward = true;
+			break;
 
-	//
+			case 37: // left
+			case 65: // a
+			moveLeft = true; break;
 
-	this.handleResize = function () {
+			case 40: // down
+			case 83: // s
+			moveBackward = true;
+			break;
 
-		if ( this.domElement === document ) {
+			case 39: // right
+			case 68: // d
+			moveRight = true;
+			break;
 
-			this.viewHalfX = window.innerWidth / 2;
-			this.viewHalfY = window.innerHeight / 2;
-
-		} else {
-
-			this.viewHalfX = this.domElement.offsetWidth / 2;
-			this.viewHalfY = this.domElement.offsetHeight / 2;
+			case 32: // space
+			if ( canJump === true ) velocity.y += 350;
+			canJump = false;
+			break;
 
 		}
 
 	};
 
-	this.onMouseDown = function ( event ) {
-
-		if ( this.domElement !== document ) {
-
-			this.domElement.focus();
-
-		}
-
-		event.preventDefault();
-		event.stopPropagation();
-
-		if ( this.activeLook ) {
-
-			switch ( event.button ) {
-
-				case 0: this.moveForward = true; break;
-				case 2: this.moveBackward = true; break;
-
-			}
-
-		}
-
-		this.mouseDragOn = true;
-
-	};
-
-	this.onMouseUp = function ( event ) {
-
-		event.preventDefault();
-		event.stopPropagation();
-
-		if ( this.activeLook ) {
-
-			switch ( event.button ) {
-
-				case 0: this.moveForward = false; break;
-				case 2: this.moveBackward = false; break;
-
-			}
-
-		}
-
-		this.mouseDragOn = false;
-
-	};
-
-	this.onMouseMove = function ( event ) {
-
-		if ( this.domElement === document ) {
-
-			this.mouseX = event.pageX - this.viewHalfX;
-			this.mouseY = event.pageY - this.viewHalfY;
-
-		} else {
-
-			this.mouseX = event.pageX - this.domElement.offsetLeft - this.viewHalfX;
-			this.mouseY = event.pageY - this.domElement.offsetTop - this.viewHalfY;
-
-		}
-
-	};
-
-	this.onKeyDown = function ( event ) {
-
-		event.preventDefault();
-
-
-		switch ( event.keyCode ) {
-
-			case 38: /*up*/
-			case 87: /*W*/ this.moveForward = true; break;
-
-			case 37: /*left*/ this.lookLeft = true; break;
-			case 65: /*A*/ this.moveLeft = true; break;
-
-			case 40: /*down*/
-			case 83: /*S*/ this.moveBackward = true; break;
-
-			case 39: /*right*/ this.lookRight = true; break;
-			case 68: /*D*/ this.moveRight = true; break;
-
-
-
-			case 82: /*R*/ this.moveUp = true; break;
-			case 70: /*F*/ this.moveDown = true; break;
-
-			case 81: /*Q*/ this.freeze = !this.freeze; break;
-
-		}
-
-	};
-
-	this.onKeyUp = function ( event ) {
+	var onKeyUp = function ( event ) {
 
 		switch( event.keyCode ) {
 
-			case 38: /*up*/
-			case 87: /*W*/ this.moveForward = false; break;
+			case 38: // up
+			case 87: // w
+			moveForward = false;
+			break;
 
-			case 37: /*left*/ this.lookLeft = false; break;
-			case 65: /*A*/ this.moveLeft = false; break;
+			case 37: // left
+			case 65: // a
+			moveLeft = false;
+			break;
 
-			case 40: /*down*/
-			case 83: /*S*/ this.moveBackward = false; break;
+			case 40: // down
+			case 83: // s
+			moveBackward = false;
+			break;
 
-			case 39: /*right*/ this.lookRight = false; break;
-			case 68: /*D*/ this.moveRight = false; break;
-
-			case 82: /*R*/ this.moveUp = false; break;
-			case 70: /*F*/ this.moveDown = false; break;
+			case 39: // right
+			case 68: // d
+			moveRight = false;
+			break;
 
 		}
 
 	};
 
-	this.rot = 60;
+	document.addEventListener( 'mousemove', onMouseMove, false );
+	document.addEventListener( 'keydown', onKeyDown, false );
+	document.addEventListener( 'keyup', onKeyUp, false );
 
-	this.update = function( delta ) {
+	this.enabled = false;
 
-		if ( this.freeze ) {
+	this.getObject = function () {
 
-			return;
-
-		}
-
-		if ( this.heightSpeed ) {
-
-			var y = THREE.Math.clamp( this.object.position.y, this.heightMin, this.heightMax );
-			var heightDelta = y - this.heightMin;
-
-			this.autoSpeedFactor = delta * ( heightDelta * this.heightCoef );
-
-		} else {
-
-			this.autoSpeedFactor = 0.0;
-
-		}
-
-		var actualMoveSpeed = delta * this.movementSpeed;
-
-		if ( this.moveForward || ( this.autoForward && !this.moveBackward ) ) this.object.translateZ( - ( actualMoveSpeed + this.autoSpeedFactor ) );
-		if ( this.moveBackward ) this.object.translateZ( actualMoveSpeed );
-
-		if ( this.moveLeft ) this.object.translateX( - actualMoveSpeed );
-		if ( this.moveRight ) this.object.translateX( actualMoveSpeed );
-
-		if ( this.moveUp ) this.object.translateY( actualMoveSpeed );
-		if ( this.moveDown ) this.object.translateY( - actualMoveSpeed );
-
-		if (this.lookLeft)
-		{
-			this.rot += 2 * delta;
-		}
-
-		if (this.lookRight)
-		{
-			this.rot -= 2 * delta;
-		}
-
-		//this.lon = Math.max( 0, Math.min( 0, this.lon ) );
-
-		var actualLookSpeed = delta * this.lookSpeed;
-
-		if ( !this.activeLook ) {
-
-			actualLookSpeed = 0;
-
-		}
-
-		var verticalLookRatio = 1;
-
-		if ( this.constrainVertical ) {
-
-			verticalLookRatio = Math.PI / ( this.verticalMax - this.verticalMin );
-
-		}
-
-		this.lon += this.mouseX * actualLookSpeed;
-
-		if( this.lookVertical ) this.lat -= this.mouseY * actualLookSpeed * verticalLookRatio;
-
-		this.lat = Math.max( - 85, Math.min( 85, this.lat ) );
-		this.phi = THREE.Math.degToRad( 90 - this.lat );
-
-		this.theta = THREE.Math.degToRad( this.lon );
-
-		if ( this.constrainVertical ) {
-
-			this.phi = THREE.Math.mapLinear( this.phi, 0, Math.PI, this.verticalMin, this.verticalMax );
-
-		}
-
-		var targetPosition = this.target,
-		position = this.object.position;
-
-		targetPosition.x = position.x + 100 * Math.sin( this.phi ) * Math.cos( this.theta );
-		targetPosition.y = position.y + 100 * Math.cos( this.phi );
-		targetPosition.z = position.z + 100 * Math.sin( this.phi ) * Math.sin( this.theta );
-
-		this.object.lookAt( targetPosition );
-
-		this.object.rotation.set(0, this.rot, 0);
-
-
-		if (position != undefined && previousPosition != undefined)
-		{
-			var x = position.x - previousPosition.x;
-			var y = position.y - previousPosition.y;
-			var z = position.z - previousPosition.z;
-
-			this.velocity = (x + z) / delta;
-		}
-
-		if (position != undefined)
-		{
-			previousPosition.set(position.x, position.y, position.z);
-		}
-	};
-
-	this.domElement.addEventListener( 'contextmenu', function ( event ) { event.preventDefault(); }, false );
-
-	//this.domElement.addEventListener( 'mousemove', bind( this, this.onMouseMove ), false );
-	this.domElement.addEventListener( 'mousedown', bind( this, this.onMouseDown ), false );
-	this.domElement.addEventListener( 'mouseup', bind( this, this.onMouseUp ), false );
-	
-	window.addEventListener( 'keydown', bind( this, this.onKeyDown ), false );
-	window.addEventListener( 'keyup', bind( this, this.onKeyUp ), false );
-
-	function bind( scope, fn ) {
-
-		return function () {
-
-			fn.apply( scope, arguments );
-
-		};
+		return yawObject;
 
 	};
 
-	this.handleResize();
+	this.isOnObject = function ( boolean ) {
+
+		isOnObject = boolean;
+		canJump = boolean;
+
+	};
+
+	this.BlockZ = function ( boolean ) {
+
+		isBlockedZ = boolean;
+
+	};
+
+	this.BlockX = function ( boolean ) {
+
+		isBlockedX = boolean;
+
+	};
+
+
+	this.getDirection = function() {
+
+		// assumes the camera itself is not rotated
+
+		var direction = new THREE.Vector3( 0, 0, -1 );
+		var rotation = new THREE.Euler( 0, 0, 0, "YXZ" );
+
+		return function( v ) {
+
+			rotation.set( pitchObject.rotation.x, yawObject.rotation.y, 0 );
+
+			v.copy( direction ).applyEuler( rotation );
+
+			return v;
+
+		}
+
+	}();
+
+	var speed = 25;
+
+	this.update = function () {
+
+	//	if ( scope.enabled === false ) return;
+
+	var time = performance.now();
+	var delta = ( time - prevTime ) / 1000;
+
+	velocity.x -= velocity.x * 10.0 * delta;
+	velocity.z -= velocity.z * 10.0 * delta;
+
+		velocity.y -= 9.8 * 100.0 * delta; // 100.0 = mass
+
+		if ( moveForward ) velocity.z -= speed * delta;
+		if ( moveBackward ) velocity.z += speed * delta;
+
+		if ( moveLeft ) velocity.x -= speed * delta;
+		if ( moveRight ) velocity.x += speed * delta;
+
+		if ( isOnObject === true ) {
+
+			velocity.y = Math.max( 0, velocity.y );
+
+		}
+
+		yawObject.translateY( velocity.y * delta ); 
+
+		if ( !isBlockedX ) {
+			yawObject.translateX( velocity.x * delta );
+		}
+
+		if ( !isBlockedZ ) {
+			yawObject.translateZ( velocity.z * delta );
+		}
+
+		if ( yawObject.position.y < 10 ) {
+
+			velocity.y = 0;
+			yawObject.position.y = 0;
+
+			canJump = true;
+
+		}
+
+	//	console.log (yawObject.position );
+
+	prevTime = time;
+
+};
 };

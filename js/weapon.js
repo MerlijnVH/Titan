@@ -8,12 +8,25 @@ Weapon = function () {
 	var ammoClip = 0;
 	var ammoClipMax = 2;
 
+	var isReload = false;
+
+	this.isReloading = function () {
+
+		return isReload;
+
+	};
+
+	this.setReload = function ( bool ) {
+
+		isReload = bool;
+
+	};
+
 	this.initialize = function ( hud ) {
 
 		ammoClip = ammoClipMax;
 
 		_hud = hud;
-		console.log( _hud );
 
 	};
 
@@ -75,6 +88,8 @@ Weapon = function () {
 		if (ammoCurrent <= 0) {
 			return;
 		}
+
+		isReload = true;
 
 		if (ammoClip <= 0) {
 

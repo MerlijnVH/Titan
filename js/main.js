@@ -1,5 +1,5 @@
 var container, stats;
-var camera, scene;
+var camera;
 var cameraOrtho, sceneOrtho;
 var controls, renderer, geometry, projector;
 var ambientLight;
@@ -29,11 +29,6 @@ var FoV = 60;
 var CamNearPlane = 0.05;
 var CamFarPlane = 1000;
 
-var PlayerMoveSpeed = 2;
-var PlayerLookSpeed = 1;
-
-var WALLHEIGHT = UNITSIZE / 3,
-
 var pickups = [];
 
 var bullets = [];
@@ -51,8 +46,18 @@ var spriteWeaponShotgunReload;
 var materialWeaponShotgun;
 var materialWeaponShotgunReload;
 
-
 var weapon;
+
+var raycaster = [];
+
+var sceneRTT, cameraRTT, sceneScreen;
+
+var reload = false;
+var reloadTime = 0.5;
+var reloadTimeElapsed = 0;
+
+var dt = 1/60;
+var time;
 
 var Sound = function ( sources, radius, volume ) {
 
@@ -110,7 +115,7 @@ if ( havePointerLock ) {
 
 		if ( document.pointerLockElement === element || document.mozPointerLockElement === element || document.webkitPointerLockElement === element ) {
 
-			controls.enabled = true;
+			player.enabled = true;
 
 			blocker.style.display = 'none';
 
@@ -145,7 +150,7 @@ var pointerlockerror = function ( event ) {
 
 				instructions.addEventListener( 'click', function ( event ) {
 
-					controls.enabled = true;
+					player.enabled = true;
 
 					blocker.style.display = 'none';
 
@@ -164,7 +169,7 @@ var pointerlockerror = function ( event ) {
 							//	document.removeEventListener( 'fullscreenchange', fullscreenchange );
 							//	document.removeEventListener( 'mozfullscreenchange', fullscreenchange );
 
-							controls.enabled = true;
+							player.enabled = true;
 
 							blocker.style.display = 'none';
 
@@ -181,7 +186,7 @@ var pointerlockerror = function ( event ) {
 					//	element.requestFullscreen();
 
 				} else {
-					controls.enabled = true;
+					player.enabled = true;
 
 					blocker.style.display = 'none';
 					element.requestPointerLock();
@@ -191,16 +196,12 @@ var pointerlockerror = function ( event ) {
 			}, false );
 
 } else {
-	controls.enabled = true;
+	player.enabled = true;
 
 	blocker.style.display = 'none';
 	instructions.innerHTML = 'Your browser doesn\'t seem to support Pointer Lock API';
 
 }
-
-var raycaster = [];
-
-var world, sphereBody, sphereShape;
 
 // Initialize
 
@@ -210,7 +211,6 @@ initialize();
 
 update();
 render();
-
 
 function initialize() {
 
@@ -265,59 +265,8 @@ function initialize() {
 	hud = new HUD();
 	hud.initialize();
 
-	//player = new Player( camera );
-	//sceneRTT.add( player.getObject() );
-
-	world = new CANNON.World();
-	world.quatNormalizeSkip = 0;
-	world.quatNormalizeFast = false;
-
-	var solver = new CANNON.GSSolver();
-
-	world.defaultContactMaterial.contactEquationStiffness = 1e9;
-	world.defaultContactMaterial.contactEquationRegularizationTime = 4;
-
-	solver.iterations = 7;
-	solver.tolerance = 0.1;
-	var split = true;
-	if(split)
-		world.solver = new CANNON.SplitSolver(solver);
-	else
-		world.solver = solver;
-
-	world.gravity.set(0,-20,0);
-	world.broadphase = new CANNON.NaiveBroadphase();
-
-                // Create a slippery material (friction coefficient = 0.0)
-                physicsMaterial = new CANNON.Material("groundMaterial");
-                var physicsContactMaterial = new CANNON.ContactMaterial(physicsMaterial,
-                	physicsMaterial,
-                                                                        10.0, // friction coefficient
-                                                                        100.3  // restitution
-                                                                        );
-                // We must add the contact materials to the world
-                world.addContactMaterial(physicsContactMaterial);
-
-                // Create a sphere
-                var mass = 5, radius = 0.15;
-                sphereShape = new CANNON.Sphere(radius);
-                sphereBody = new CANNON.RigidBody(mass,sphereShape,physicsMaterial);
-       //   sphereBody.position.set(0,5,0);
-                sphereBody.linearDamping = 0.9;
-                world.add(sphereBody);
-
-                // Create a plane
-               var groundShape = new CANNON.Plane();
-               var groundBody = new CANNON.RigidBody(0,groundShape,physicsMaterial);
-               groundBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1,0,0),-Math.PI/2);
-            //   world.add(groundBody);
-
-                controls = new PointerLockControls( camera , sphereBody );
-                sceneRTT.add( controls.getObject() );
-
-	//player.movementSpeed = 2.5;
-	//player.lookSpeed = 5;
-
+	player = new Player( camera );
+	sceneRTT.add( player.getObject() );
 
 	// Initialize the scene and load the world.
 
@@ -483,7 +432,7 @@ function SetupScene() {
 		canvas.height = height;
 		canvas.getContext('2d').drawImage(mapTextureImg, 0, 0, width, height);
 
-var halfExtents = new CANNON.Vec3(UNITSIZE / 2, UNITSIZE / 2, UNITSIZE / 2);
+		var halfExtents = new CANNON.Vec3(UNITSIZE / 2, UNITSIZE / 2, UNITSIZE / 2);
 
 		for (var x = 0; x < width; x++)
 		{
@@ -494,8 +443,6 @@ var halfExtents = new CANNON.Vec3(UNITSIZE / 2, UNITSIZE / 2, UNITSIZE / 2);
 				// Floor & Ceiling
 
 				if (pixelData[0] != 0 && pixelData[1] != 0 && pixelData[2] != 0 && pixelData[3] == 255) {
-
-					console.log ('not a wall!');
 
 					var plane = new THREE.Mesh( cube, materials[0] );
 
@@ -513,27 +460,6 @@ var halfExtents = new CANNON.Vec3(UNITSIZE / 2, UNITSIZE / 2, UNITSIZE / 2);
 
 					sceneRTT.add( plane );
 
-
-                // Add boxes
-
-                var boxShape = new CANNON.Box(halfExtents);
-               // var boxGeometry = new THREE.CubeGeometry(halfExtents.x*2,halfExtents.y*2,halfExtents.z*2);
-                //    var xa = (Math.random()-0.5)*20;
-                //    var ya = 1 + (Math.random()-0.5)*1;
-                //    var za = (Math.random()-0.5)*20;
-                    var boxBody = new CANNON.RigidBody(0,boxShape);
-                //    var boxMesh = new THREE.Mesh( boxGeometry, material );
-                    world.add(boxBody);
-                //    sceneRTT.add(boxMesh);
-                    boxBody.position.set(x * UNITSIZE, -UNITSIZE, y * UNITSIZE);
-                //    boxMesh.position.set(xa,ya,za);
-                //    boxMesh.castShadow = true;
-                 //   boxMesh.receiveShadow = true;
-                 //   boxMesh.useQuaternion = true;
-               //     boxes.push(boxBody);
-                //    boxMeshes.push(boxMesh);
-
-
 				}
 
 				if (pixelData[0] == 0 && pixelData[1] == 0 && pixelData[2] == 0) {
@@ -546,18 +472,6 @@ var halfExtents = new CANNON.Vec3(UNITSIZE / 2, UNITSIZE / 2, UNITSIZE / 2);
 					sceneRTT.add(wall);
 
 					walls.push(wall);
-
-
-                var boxShape = new CANNON.Box(halfExtents);
-               // var boxGeometry = new THREE.CubeGeometry(halfExtents.x*2,halfExtents.y*2,halfExtents.z*2);
-                //    var xa = (Math.random()-0.5)*20;
-                //    var ya = 1 + (Math.random()-0.5)*1;
-                //    var za = (Math.random()-0.5)*20;
-                    var boxBody = new CANNON.RigidBody(0,boxShape);
-                //    var boxMesh = new THREE.Mesh( boxGeometry, material );
-                    world.add(boxBody);
-                //    sceneRTT.add(boxMesh);
-                    boxBody.position.set(x * UNITSIZE, 0, y * UNITSIZE);
 
 				}
 
@@ -586,13 +500,11 @@ var halfExtents = new CANNON.Vec3(UNITSIZE / 2, UNITSIZE / 2, UNITSIZE / 2);
 
 				// Player spawn
 
-				if (controls != undefined) {
+				if (player != undefined) {
 					if (pixelData[0] == 1 && pixelData[1] == 255 && pixelData[2] == 10 && pixelData[3] == 255) {
-						controls.getObject().position.x = x * UNITSIZE;
-						controls.getObject().position.y = 0;
-						controls.getObject().position.z = y * UNITSIZE;
-
-						sphereBody.position.set(x * UNITSIZE,5,y * UNITSIZE);
+						player.getObject().position.x = x * UNITSIZE;
+						player.getObject().position.y = 0;
+						player.getObject().position.z = y * UNITSIZE;
 
 						var lookVector = new THREE.Vector3( 0, 90, 0 );
 					}
@@ -645,50 +557,19 @@ function onWindowResize() {
 
 }
 
-var dt = 1/60;
-var time;
-
 function update() {
 
+	requestAnimationFrame( update );
 
-requestAnimationFrame( update );
+	delta = clock.getDelta();
 
-delta = clock.getDelta();
+	updatePickups();
 
-	if(controls.enabled){
-		world.step(dt);
+	updateWeapon();
 
+	updateBullets();
 
-	}
-
-	controls.update( Date.now() - time );
-	renderer.render( scene, camera );
-	time = Date.now();
-
-	if (player != undefined) {
-		for (var i = 0; i < pickups.length; i++)
-		{
-			var pickup = pickups[i];
-
-			var a = player.getObject().position;
-			var b = pickup.position;
-
-		//console.log(b);
-
-		var distance = a.distanceTo( b );
-
-		if (distance <= 0.5) {
-			sceneRTT.remove(pickup);
-			weapon.addAmmo( 36 );
-			console.log('picking up');
-			pickups.splice(i, 1);
-		}
-	}
-}
-
-	//cube.rotation.x += 1 * delta;
-
-	//controls.update( delta );
+	weapon.update( delta );
 
 	//player.isOnObject( true );
 
@@ -698,7 +579,6 @@ delta = clock.getDelta();
 		player.BlockX( false );
 		player.BlockZ( false );
 
-		weapon.update( delta );
 
 
 		raycaster[0].ray.origin.copy( player.getObject().position );
@@ -768,74 +648,10 @@ var collisions;
 
       raycaster[0].ray.origin.x = oriX;
 
-	//console.log('test');
 
-	stats.update();
-
-	if (spriteWeapon != undefined)
-	{
-		if (reload)
-		{
-			reloadTimeElapsed += 1.0 * delta;
-
-			spriteWeapon.material = materialWeaponShotgunReload;
-
-			if (reloadTimeElapsed >= reloadTime)
-			{
-				spriteWeapon.material = materialWeaponShotgun;
-
-				reloadTimeElapsed = 0;
-
-				reload = false;
-			}
-		}
-	}
-
-
-	for (var i = 0; i < pickups.length; i++)
-	{
-		var pickup = pickups[i];
-
-		pickup.rotation.y += 1 * delta;
-	}
-
-	for (var d = bullets.length - 1; d >= 0; d--)
-	{
-		var bullet = bullets[d];
-
-		var bulletSpeed = 8;
-
-		bullet.translateX(bulletSpeed * bullet.ray.direction.x * delta);
-		bullet.translateY(bulletSpeed * bullet.ray.direction.y * delta);
-		bullet.translateZ(bulletSpeed * bullet.ray.direction.z * delta);
-	}
-
-	//var ix = 0;
-
-	//console.log(spriteWeapon);
-	//spriteWeapon.position.y = Math.sin((theta)*0.3)*100 + Math.sin((0 + theta)*0.3)*100;
+      stats.update();
+  }
 }
-var magnitude = 8;
-var speed = 8;
-
-if (spriteWeapon != undefined && player != undefined) {
-
-	if (player.velocity >= 0.0005 || player.velocity <= -0.0005) {
-
-		spriteWeapon.position.x = baseX + Math.sin(clock.getElapsedTime() * speed / 2) * 16;
-
-	}
-
-	spriteWeapon.position.y = baseY + Math.sin(clock.getElapsedTime() * speed) * 8;
-
-}
-}
-
-var sceneRTT, cameraRTT, sceneScreen;
-
-var reload = false;
-var reloadTime = 0.5;
-var reloadTimeElapsed = 0;
 
 function render() {
 
@@ -843,32 +659,123 @@ function render() {
 
 	renderer.clear();
 
-	// Render first scene into texture
-
-
+	// Draw game scene into texture.
 
 	renderer.render( sceneRTT, camera, renderTexture, true );
 
 	renderer.clearDepth();
 
+	// Draww ortographic scene into texture.
+
 	renderer.render( sceneOrtho, cameraOrtho, renderTexture, false );
 
-	// Render full screen quad with generated texture
+	// Draw full screen quad with generated render texture.
 
 	renderer.render( sceneScreen, cameraRTT );
 
+}
 
+function updatePickups () {
 
-	// Render second scene to screen
-	// (using first scene as regular texture)
+	if (player == undefined) {
 
-//	renderer.render( scene, camera );
+		return;
+
+	}
+
+	var distanceToPickup = 0.5;
+
+	for (var i = 0; i < pickups.length; i++) {
+
+		var pickup = pickups[i];
+
+		// Spin the pickup.
+
+		pickup.rotation.y += 1 * delta;
+
+      	// Check distance between pickup and player, for picking up.
+
+      	var a = player.getObject().position;
+      	var b = pickup.position;
+
+      	var distance = a.distanceTo( b );
+
+		// The player is close enough, pick it up.
+
+		if (distance <= distanceToPickup) {
+
+			sceneRTT.remove( pickup );
+			pickups.splice( i, 1 );
+
+			weapon.addAmmo( 36 );
+
+		}
+
+	}
+
+}
+
+function updateWeapon () {
+
+	if (spriteWeapon == undefined) {
+		return;
+	}
+
+	if (weapon.isReloading()) {
+
+		reloadTimeElapsed += 1.0 * delta;
+
+		spriteWeapon.material = materialWeaponShotgunReload;
+
+		if (reloadTimeElapsed >= reloadTime) {
+
+			spriteWeapon.material = materialWeaponShotgun;
+
+			reloadTimeElapsed = 0;
+
+			weapon.setReload( false );
+
+		}
+
+	}
+
+	// Bob the weapon using a sine wave.
+
+	var magnitude = 8;
+	var speed = 8;
+
+	// Sway the weapon up and down.
+
+	spriteWeapon.position.y = baseY + Math.sin(clock.getElapsedTime() * speed) * 8;
+
+	// When the player moves, sway the weapon left and right.
+
+	if (player.velocity >= 0.0005 || player.velocity <= -0.0005) {
+
+		spriteWeapon.position.x = baseX + Math.sin(clock.getElapsedTime() * speed / 2) * 16;
+
+	}
+
+}
+
+function updateBullets () {
+
+	for (var i = bullets.length - 1; i >= 0; i--) {
+
+		var bullet = bullets[i];
+
+		var bulletSpeed = 8;
+
+		bullet.translateX(bulletSpeed * bullet.ray.direction.x * delta);
+		bullet.translateY(bulletSpeed * bullet.ray.direction.y * delta);
+		bullet.translateZ(bulletSpeed * bullet.ray.direction.z * delta);
+		
+	}
 
 }
 
 function createBullet( obj ) {
 
-return;
 	weapon.fire();
 
 	obj = player.getObject();

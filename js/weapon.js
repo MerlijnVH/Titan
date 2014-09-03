@@ -8,7 +8,17 @@ Weapon = function () {
 	var ammoClip = 0;
 	var ammoClipMax = 2;
 
+	var fireTime = 0.075;
+	var fireTimeElapsed = 0; 
+
+	var isFire = false;
 	var isReload = false;
+
+	this.isFiring = function () {
+
+		return isFire;
+
+	};
 
 	this.isReloading = function () {
 
@@ -34,6 +44,17 @@ Weapon = function () {
 
 		_hud.setAmmo( ammoCurrent );
 
+		if (isFire) {
+			fireTimeElapsed += 1.0 * delta;
+
+			if (fireTimeElapsed >= fireTime) {
+
+				fireTimeElapsed = 0;
+
+				isFire = false;
+			}
+		}
+
 	};
 
 	this.fire = function () {
@@ -41,6 +62,8 @@ Weapon = function () {
 		// If there is ammo in the clip, remove a bullet and fire it.
 
 		if (ammoClip > 0) {
+
+			isFire = true;
 
 			ammoClip--;
 

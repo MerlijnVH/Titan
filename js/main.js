@@ -37,6 +37,10 @@ var sphereGeo = new THREE.SphereGeometry(0.05, 0.05, 0.05);
 
 var walls = [];
 
+var weaponSprites = [];
+
+var textureWeaponShotgun;
+
 var textureWeaponShotgun;
 var textureWeaponShotgunReload;
 
@@ -50,9 +54,9 @@ var weapon;
 
 var raycaster = [];
 
-var sceneRTT, cameraRTT, sceneScreen;
+var sceneGame, cameraScreen, sceneScreen;
 
-var reload = false;
+
 var reloadTime = 0.5;
 var reloadTimeElapsed = 0;
 
@@ -121,15 +125,15 @@ if ( havePointerLock ) {
 
 		} else {
 
-		//	controls.enabled = false;
+//	controls.enabled = false;
 
-		blocker.style.display = '-webkit-box';
-		blocker.style.display = '-moz-box';
-		blocker.style.display = 'box';
+blocker.style.display = '-webkit-box';
+blocker.style.display = '-moz-box';
+blocker.style.display = 'box';
 
-		instructions.style.display = '';
+instructions.style.display = '';
 
-	}
+}
 
 }
 
@@ -139,61 +143,61 @@ var pointerlockerror = function ( event ) {
 
 }
 
-				// Hook pointer lock state change events
-				document.addEventListener( 'pointerlockchange', pointerlockchange, false );
-				document.addEventListener( 'mozpointerlockchange', pointerlockchange, false );
-				document.addEventListener( 'webkitpointerlockchange', pointerlockchange, false );
+// Hook pointer lock state change events
+document.addEventListener( 'pointerlockchange', pointerlockchange, false );
+document.addEventListener( 'mozpointerlockchange', pointerlockchange, false );
+document.addEventListener( 'webkitpointerlockchange', pointerlockchange, false );
 
-				document.addEventListener( 'pointerlockerror', pointerlockerror, false );
-				document.addEventListener( 'mozpointerlockerror', pointerlockerror, false );
-				document.addEventListener( 'webkitpointerlockerror', pointerlockerror, false );
+document.addEventListener( 'pointerlockerror', pointerlockerror, false );
+document.addEventListener( 'mozpointerlockerror', pointerlockerror, false );
+document.addEventListener( 'webkitpointerlockerror', pointerlockerror, false );
 
-				instructions.addEventListener( 'click', function ( event ) {
+instructions.addEventListener( 'click', function ( event ) {
 
-					player.enabled = true;
+	player.enabled = true;
 
-					blocker.style.display = 'none';
+	blocker.style.display = 'none';
 
-					instructions.style.display = 'none';
+	instructions.style.display = 'none';
 
-					// Ask the browser to lock the pointer
-					element.requestPointerLock = element.requestPointerLock || element.mozRequestPointerLock || element.webkitRequestPointerLock;
-					element.requestPointerLock();
+// Ask the browser to lock the pointer
+element.requestPointerLock = element.requestPointerLock || element.mozRequestPointerLock || element.webkitRequestPointerLock;
+element.requestPointerLock();
 
-					if ( /Firefox/i.test( navigator.userAgent ) ) {
+if ( /Firefox/i.test( navigator.userAgent ) ) {
 
-						var fullscreenchange = function ( event ) {
+	var fullscreenchange = function ( event ) {
 
-							if ( document.fullscreenElement === element || document.mozFullscreenElement === element || document.mozFullScreenElement === element ) {
+		if ( document.fullscreenElement === element || document.mozFullscreenElement === element || document.mozFullScreenElement === element ) {
 
-							//	document.removeEventListener( 'fullscreenchange', fullscreenchange );
-							//	document.removeEventListener( 'mozfullscreenchange', fullscreenchange );
+//	document.removeEventListener( 'fullscreenchange', fullscreenchange );
+//	document.removeEventListener( 'mozfullscreenchange', fullscreenchange );
 
-							player.enabled = true;
+player.enabled = true;
 
-							blocker.style.display = 'none';
+blocker.style.display = 'none';
 
-							element.requestPointerLock();
-						}
+element.requestPointerLock();
+}
 
-					}
+}
 
-					//	document.addEventListener( 'fullscreenchange', fullscreenchange, false );
-					//	document.addEventListener( 'mozfullscreenchange', fullscreenchange, false );
+//	document.addEventListener( 'fullscreenchange', fullscreenchange, false );
+//	document.addEventListener( 'mozfullscreenchange', fullscreenchange, false );
 //
-					//	element.requestFullscreen = element.requestFullscreen || element.mozRequestFullscreen || element.mozRequestFullScreen || element.webkitRequestFullscreen;
+//	element.requestFullscreen = element.requestFullscreen || element.mozRequestFullscreen || element.mozRequestFullScreen || element.webkitRequestFullscreen;
 
-					//	element.requestFullscreen();
+//	element.requestFullscreen();
 
-				} else {
-					player.enabled = true;
+} else {
+	player.enabled = true;
 
-					blocker.style.display = 'none';
-					element.requestPointerLock();
+	blocker.style.display = 'none';
+	element.requestPointerLock();
 
-				}
+}
 
-			}, false );
+}, false );
 
 } else {
 	player.enabled = true;
@@ -227,24 +231,24 @@ function initialize() {
 
 	// Set up scene objects, stores objects to scene-graph container to be rendered.
 
-	scene = new THREE.Scene();
-	sceneRTT = new THREE.Scene();
-	sceneScreen = new THREE.Scene();
-
-	// Set up scene objects for storing ortographic rendering objects.
-
+	sceneGame = new THREE.Scene();
 	sceneOrtho = new THREE.Scene();
+
+	sceneScreen = new THREE.Scene();
 
 	// Set up camera based on desired FoV and screen size.
 
 	camera = new THREE.PerspectiveCamera( FoV, ASPECTRATIO, CamNearPlane, CamFarPlane );
-	cameraRTT = new THREE.OrthographicCamera( SCREEN_WIDTH / - 2, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, SCREEN_HEIGHT / - 2, -10000, 10000 );
-	cameraRTT.position.z = 100;
 
 	// Set up ortographic camera for rendering HUD.
 
 	cameraOrtho = new THREE.OrthographicCamera( -(SCREEN_WIDTH / 2), SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, -(SCREEN_HEIGHT / 2), 0, 1000 );
 	cameraOrtho.position.z = 10;
+
+	// Set up camera for rendering screen.
+
+	cameraScreen = new THREE.OrthographicCamera( -(SCREEN_WIDTH / 2), SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, -(SCREEN_HEIGHT / 2), 0, 1000 );
+	cameraScreen.position.z = 10;
 
 	// Set up render-to-texture.
 
@@ -266,7 +270,7 @@ function initialize() {
 	hud.initialize();
 
 	player = new Player( camera );
-	sceneRTT.add( player.getObject() );
+	sceneGame.add( player.getObject() );
 
 	// Initialize the scene and load the world.
 
@@ -279,14 +283,19 @@ function initialize() {
 
 	spriteMap = THREE.ImageUtils.loadTexture( 'data/sprites/shotgun.png', undefined, createHUDSprites );
 
-	textureWeaponShotgun = THREE.ImageUtils.loadTexture('data/sprites/shotgun.png');
-	textureWeaponShotgunReload = THREE.ImageUtils.loadTexture('data/sprites/shotgunreload.png');
+	weaponSprites[0] = THREE.ImageUtils.loadTexture( 'data/sprites/shotgun.png' );
+	weaponSprites[1] = THREE.ImageUtils.loadTexture( 'data/sprites/shotgunfire.png' );
+	weaponSprites[2] = THREE.ImageUtils.loadTexture( 'data/sprites/shotgunreload.png' );
 
-	textureWeaponShotgun.magFilter = THREE.NearestFilter;
-	textureWeaponShotgun.minFilter = THREE.NearestFilter;
+	for (var i = 0; i < weaponSprites.length; i++) {
+		var sprite = weaponSprites[i];
 
-	textureWeaponShotgunReload.magFilter = THREE.NearestFilter;
-	textureWeaponShotgunReload.minFilter = THREE.NearestFilter;
+		sprite.magFilter = THREE.NearestFilter;
+		sprite.minFilter = THREE.NearestFilter;
+
+		sprite.magFilter = THREE.NearestFilter;
+		sprite.minFilter = THREE.NearestFilter;
+	}
 
 	materialWeaponShotgun = new THREE.SpriteMaterial( { map: textureWeaponShotgun } );
 	materialWeaponShotgunReload = new THREE.SpriteMaterial( { map: textureWeaponShotgunReload } );
@@ -397,11 +406,14 @@ function getTexture(path) {
 
 }
 
-function SetupScene() {
+function SetupScene () {
 
 	// Setup fog, gives the scene almost an ambient occlusion feeling.
 
-	sceneRTT.fog = new THREE.FogExp2(0x000000, 0.25); // color, density
+	sceneGame.fog = new THREE.FogExp2(0x000000, 0.25); // color, density
+
+	ambientLight = new THREE.AmbientLight( 0xffffff );
+	sceneGame.add( ambientLight );
 
 	var image = THREE.ImageUtils;
 
@@ -450,7 +462,7 @@ function SetupScene() {
 					plane.position.y = -UNITSIZE;
 					plane.position.z = y * UNITSIZE;
 
-					sceneRTT.add( plane );
+					sceneGame.add( plane );
 
 					var plane = new THREE.Mesh( cube, materials[0] );
 
@@ -458,7 +470,7 @@ function SetupScene() {
 					plane.position.y = UNITSIZE;
 					plane.position.z = y * UNITSIZE;
 
-					sceneRTT.add( plane );
+					sceneGame.add( plane );
 
 				}
 
@@ -469,7 +481,7 @@ function SetupScene() {
 					wall.position.y = 0;
 					wall.position.z = y * UNITSIZE;
 
-					sceneRTT.add(wall);
+					sceneGame.add(wall);
 
 					walls.push(wall);
 
@@ -494,7 +506,7 @@ function SetupScene() {
 
 					pickups.push(healthCube);
 
-					sceneRTT.add(healthCube);
+					sceneGame.add(healthCube);
 
 				}
 
@@ -509,6 +521,7 @@ function SetupScene() {
 						var lookVector = new THREE.Vector3( 0, 90, 0 );
 					}
 				}
+
 				// Enemy spawn
 
 				if (pixelData[0] == 255 && pixelData[1] == 60 && pixelData[2] == 60 && pixelData[3] == 255) {
@@ -525,16 +538,14 @@ function SetupScene() {
 					var healthCube = new THREE.Mesh( new THREE.BoxGeometry(boxSize, boxSize, boxSize), material );
 					healthCube.position.set(x * UNITSIZE, 0, y * UNITSIZE);
 
-					//pickups.push(healthCube);
 
-					sceneRTT.add(healthCube);
+
+					sceneGame.add(healthCube);
 				}
 			}
 		}
 	}
 
-	ambientLight = new THREE.AmbientLight( 0xffffff );
-	sceneRTT.add( ambientLight );
 }
 
 function onWindowResize() {
@@ -569,17 +580,17 @@ function update() {
 
 	updateBullets();
 
+	player.update();
+
 	weapon.update( delta );
 
-	//player.isOnObject( true );
+	stats.update();
 
 	if (player != undefined)
 	{
 		player.isOnObject( false );
 		player.BlockX( false );
 		player.BlockZ( false );
-
-
 
 		raycaster[0].ray.origin.copy( player.getObject().position );
 
@@ -598,62 +609,52 @@ function update() {
 
 		if ( intersections.length > 0 ) {
 
-//	console.log('umphf');
-//	player.BlockZ(true);
 
+		}
+
+		var rays = [
+		new THREE.Vector3(0, 0, 1),
+		new THREE.Vector3(1, 0, 1),
+		new THREE.Vector3(1, 0, 0),
+		new THREE.Vector3(1, 0, -1),
+		new THREE.Vector3(0, 0, -1),
+		new THREE.Vector3(-1, 0, -1),
+		new THREE.Vector3(-1, 0, 0),
+		new THREE.Vector3(-1, 0, 1)
+		];
+
+		var colCaster = new THREE.Raycaster();
+
+		var collisions;// Maximum distance from the origin before we consider collision
+		var distance = 0.25;
+
+		for (var i = 0; i < rays.length; i++) {
+
+			var a = player.getObject().position;
+
+			colCaster.set(a, rays[i]);
+
+			var hits = colCaster.intersectObjects( walls );
+
+			if (hits.length > 0 && hits[0].distance <= distance) {
+
+				if (i === 0 || i === 4) {
+					player.BlockZ( true );
+				}
+
+				if (i === 2 || i === 6) {
+					player.BlockX( true );
+				}
+			}
+
+		}
+
+		raycaster[0].ray.origin.x = oriX;
+
+	}
 }
 
-
-
-var rays = [
-new THREE.Vector3(0, 0, 1),
-new THREE.Vector3(1, 0, 1),
-new THREE.Vector3(1, 0, 0),
-new THREE.Vector3(1, 0, -1),
-new THREE.Vector3(0, 0, -1),
-new THREE.Vector3(-1, 0, -1),
-new THREE.Vector3(-1, 0, 0),
-new THREE.Vector3(-1, 0, 1)
-];
-
-var colCaster = new THREE.Raycaster();
-
-var collisions;
-      // Maximum distance from the origin before we consider collision
-      var distance = 0.25;
-
-      for (var i = 0; i < rays.length; i++) {
-
-      	var a = player.getObject().position;
-
-      	colCaster.set(a, rays[i]);
-
-      	var hits = colCaster.intersectObjects( walls );
-
-      	if (hits.length > 0 && hits[0].distance <= distance) {
-
-      		if (i === 0 || i === 4) {
-      			player.BlockZ( true );
-      		}
-
-      		if (i === 2 || i === 6) {
-      			player.BlockX( true );
-      		}
-      	}
-
-      }
-
-
-      player.update();
-
-      raycaster[0].ray.origin.x = oriX;
-
-
-      stats.update();
-  }
-}
-
-function render() {
+function render () {
 
 	requestAnimationFrame( render );
 
@@ -661,29 +662,33 @@ function render() {
 
 	// Draw game scene into texture.
 
-	renderer.render( sceneRTT, camera, renderTexture, true );
+	renderer.render( sceneGame, camera, renderTexture, true );
 
-	renderer.clearDepth();
-
-	// Draww ortographic scene into texture.
+	// Draw ortographic scene into texture.
 
 	renderer.render( sceneOrtho, cameraOrtho, renderTexture, false );
 
-	// Draw full screen quad with generated render texture.
+	// Draw scene with full screen quad using generated render texture.
 
-	renderer.render( sceneScreen, cameraRTT );
+	renderer.render( sceneScreen, cameraScreen );
 
 }
 
 function updatePickups () {
 
 	if (player == undefined) {
-
 		return;
-
 	}
 
+	var pickupRotationSpeed = 1;
 	var distanceToPickup = 0.5;
+	var ammoPerPickup = 12;
+
+	// Bob the weapon using a sine wave.
+
+	var baseY = -0.25;
+	var magnitude = 0.05;
+	var speed = 1;
 
 	for (var i = 0; i < pickups.length; i++) {
 
@@ -691,23 +696,24 @@ function updatePickups () {
 
 		// Spin the pickup.
 
-		pickup.rotation.y += 1 * delta;
+		pickup.rotation.y += pickupRotationSpeed * delta;
+		pickup.position.y = baseY + Math.sin(clock.getElapsedTime() * speed) * magnitude;
 
-      	// Check distance between pickup and player, for picking up.
+		// Check distance between pickup and player, for picking up.
 
-      	var a = player.getObject().position;
-      	var b = pickup.position;
+		var a = player.getObject().position;
+		var b = pickup.position;
 
-      	var distance = a.distanceTo( b );
+		var distance = a.distanceTo( b );
 
 		// The player is close enough, pick it up.
 
 		if (distance <= distanceToPickup) {
 
-			sceneRTT.remove( pickup );
+			sceneGame.remove( pickup );
 			pickups.splice( i, 1 );
 
-			weapon.addAmmo( 36 );
+			weapon.addAmmo( ammoPerPickup );
 
 		}
 
@@ -721,38 +727,51 @@ function updateWeapon () {
 		return;
 	}
 
+	updateWeaponBobbing();
+
+	if (weapon.isFiring()) {
+		spriteWeapon.material.map = weaponSprites[1];
+
+		return;
+	} else {
+		spriteWeapon.material.map = weaponSprites[0];
+	}
+
 	if (weapon.isReloading()) {
 
 		reloadTimeElapsed += 1.0 * delta;
 
-		spriteWeapon.material = materialWeaponShotgunReload;
-
 		if (reloadTimeElapsed >= reloadTime) {
 
-			spriteWeapon.material = materialWeaponShotgun;
+			spriteWeapon.material.map = weaponSprites[0];
 
 			reloadTimeElapsed = 0;
 
 			weapon.setReload( false );
 
-		}
+		} else {
 
+			spriteWeapon.material.map = weaponSprites[2];
+
+		}
 	}
 
-	// Bob the weapon using a sine wave.
+}
 
-	var magnitude = 8;
+function updateWeaponBobbing () {
+
 	var speed = 8;
+	var magnitude = 8;
 
-	// Sway the weapon up and down.
+	// Bob the weapon up and down.
 
-	spriteWeapon.position.y = baseY + Math.sin(clock.getElapsedTime() * speed) * 8;
+	spriteWeapon.position.y = baseY + Math.sin(clock.getElapsedTime() * speed) * magnitude;
 
 	// When the player moves, sway the weapon left and right.
 
 	if (player.velocity >= 0.0005 || player.velocity <= -0.0005) {
 
-		spriteWeapon.position.x = baseX + Math.sin(clock.getElapsedTime() * speed / 2) * 16;
+		spriteWeapon.position.x = baseX + Math.sin(clock.getElapsedTime() * speed / 2) * (magnitude * 2);
 
 	}
 
@@ -769,47 +788,35 @@ function updateBullets () {
 		bullet.translateX(bulletSpeed * bullet.ray.direction.x * delta);
 		bullet.translateY(bulletSpeed * bullet.ray.direction.y * delta);
 		bullet.translateZ(bulletSpeed * bullet.ray.direction.z * delta);
-		
+
 	}
 
 }
 
-function createBullet( obj ) {
+function createBullet () {
+
+	if (weapon == undefined) {
+		return;
+	}
+
+	if (weapon.isFiring() || weapon.isReloading())
+	{
+		return;
+	}
 
 	weapon.fire();
 
 	obj = player.getObject();
 
-	if (obj == undefined)
-	{
-	}
+	var sphere = new THREE.Mesh( sphereGeo );
+	sphere.position.set( obj.position.x, obj.position.y, obj.position.z );
 
-	if (spriteWeaponShotgunReload != undefined)
-	{
-	//	spriteWeapon.material = spriteWeaponShotgunReload.material;
-}
+	var obstacles, collisions;
 
-if (reload == true)
-{
-	return;
-}
+	var vector = new THREE.Vector3( 0, 0, -1 );
+	vector.applyEuler(obj.rotation, obj.order);
 
-reload = true;
-
-var mouse = { x: 0, y: 0 };
-
-var sphere = new THREE.Mesh( sphereGeo, sphereMaterial );
-sphere.position.set( obj.position.x, obj.position.y * 0.8, obj.position.z );
-
-var obstacles, collisions;
-
-
-var vector = new THREE.Vector3( 0, 0, -1 );
-vector.applyEuler(obj.rotation, obj.order);
-
-	//projector.unprojectVector(vector, camera);
-
-	var rayCam = new THREE.Ray(camera.position, vector);
+	var rayCam = new THREE.Ray( obj.position, vector );
 
 	var rayCaster = new THREE.Raycaster(rayCam.origin, rayCam.direction);
 	sphere.ray = rayCaster.ray;
@@ -820,7 +827,7 @@ vector.applyEuler(obj.rotation, obj.order);
 
 	var distance = 0.15;
 
-	var intersects = rayCaster.intersectObjects(obstacles);
+	var intersects = rayCaster.intersectObjects( walls );
 
 	if (intersects.length > 0)
 	{
@@ -833,25 +840,17 @@ vector.applyEuler(obj.rotation, obj.order);
 
 			console.log(collision);
 
-			sceneRTT.add(hitSphere);
+			sceneGame.add(hitSphere);
 
 			break;
 		}
 	}
 
-	// if (collisions.length > 0)
-	// {
-	// 	for (var i = 0; collisions.length; i++)
-	// 	{
-
-	// 	}
-	// }
-
 	sphere.owner = obj;
 
 	bullets.push(sphere);
 
-	sceneRTT.add(sphere);
+	sceneGame.add(sphere);
 
 	return sphere;
 

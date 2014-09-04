@@ -340,7 +340,7 @@ function initialize() {
 	sound1.position.copy( camera.position );
 //	sound1.play();
 
-	raycaster[0] = new THREE.Raycaster( new THREE.Vector3(), new THREE.Vector3( 1, 0, 0 ), 0, 10 );
+raycaster[0] = new THREE.Raycaster( new THREE.Vector3(), new THREE.Vector3( 1, 0, 0 ), 0, 10 );
 }
 
 function onKeyDown( event ) {
@@ -417,65 +417,73 @@ function SetupScene () {
 
 	// Setup fog, gives the scene almost an ambient occlusion feeling.
 
-	sceneGame.fog = new THREE.FogExp2(0x000000, 0.25); // color, density
+sceneGame.fog = new THREE.FogExp2(0x000000, 0.15); // color, density
 
-	ambientLight = new THREE.AmbientLight( 0xffffff );
-	sceneGame.add( ambientLight );
+ambientLight = new THREE.AmbientLight( 0xffffff );
+sceneGame.add( ambientLight );
 
-	var image = THREE.ImageUtils;
+var image = THREE.ImageUtils;
 
-	var cube = new THREE.BoxGeometry(UNITSIZE, UNITSIZE, UNITSIZE);
+var cube = new THREE.BoxGeometry(UNITSIZE, UNITSIZE, UNITSIZE);
+var geometryPlane = new THREE.PlaneGeometry(UNITSIZE, UNITSIZE, 1, 1);
 
-	var textures = [
-	getTexture('data/textures/DI_Dev_Floor.png'),
-	getTexture('data/textures/DI_Dev_Wall.png'),
-	];
+var textures = [
+getTexture('data/textures/DI_Dev_Floor.png'),
+getTexture('data/textures/DI_Dev_Wall.png'),
+];
 
-	var materials = [
-	new THREE.MeshLambertMaterial({map: textures[0]}),
-	new THREE.MeshLambertMaterial({map: textures[1]})
-	];
+var materials = [
+new THREE.MeshLambertMaterial({map: textures[0]}),
+new THREE.MeshLambertMaterial({map: textures[1]})
+];
 
-	var mapTexture = THREE.ImageUtils.loadTexture( 'data/map.png' );
+var mapTexture = THREE.ImageUtils.loadTexture( 'data/map.png' );
 
-	var mapTextureImg = new Image();
-	mapTextureImg.src = 'data/map.png';
+var mapTextureImg = new Image();
+mapTextureImg.src = 'data/map.png';
 
-	mapTextureImg.onload = function()
+mapTextureImg.onload = function()
+{
+	var width = mapTextureImg.width;
+	var height = mapTextureImg.height;
+
+	var canvas = document.createElement('canvas');
+	canvas.width = width;
+	canvas.height = height;
+	canvas.getContext('2d').drawImage(mapTextureImg, 0, 0, width, height);
+
+	var halfExtents = new CANNON.Vec3(UNITSIZE / 2, UNITSIZE / 2, UNITSIZE / 2);
+
+	for (var x = 0; x < width; x++)
 	{
-		var width = mapTextureImg.width;
-		var height = mapTextureImg.height;
-
-		var canvas = document.createElement('canvas');
-		canvas.width = width;
-		canvas.height = height;
-		canvas.getContext('2d').drawImage(mapTextureImg, 0, 0, width, height);
-
-		var halfExtents = new CANNON.Vec3(UNITSIZE / 2, UNITSIZE / 2, UNITSIZE / 2);
-
-		for (var x = 0; x < width; x++)
+		for (var y = 0; y < height; y++)
 		{
-			for (var y = 0; y < height; y++)
-			{
-				var pixelData = canvas.getContext('2d').getImageData(x, y, 1, 1).data;
+			var pixelData = canvas.getContext('2d').getImageData(x, y, 1, 1).data;
 
 				// Floor & Ceiling
 
 				if (pixelData[0] != 0 && pixelData[1] != 0 && pixelData[2] != 0 && pixelData[3] == 255) {
 
-					var plane = new THREE.Mesh( cube, materials[0] );
+
+
+					var plane = new THREE.Mesh( geometryPlane, materials[0] );
 
 					plane.position.x = x * UNITSIZE;
-					plane.position.y = -UNITSIZE;
+					plane.position.y = -UNITSIZE / 2;
 					plane.position.z = y * UNITSIZE;
+
+
+					rotateObject(plane, -Math.PI / 2, 0, 0);
 
 					sceneGame.add( plane );
 
-					var plane = new THREE.Mesh( cube, materials[0] );
+					var plane = new THREE.Mesh( geometryPlane, materials[0] );
 
 					plane.position.x = x * UNITSIZE;
-					plane.position.y = UNITSIZE;
+					plane.position.y = UNITSIZE / 2;
 					plane.position.z = y * UNITSIZE;
+
+					rotateObject(plane, Math.PI / 2, 0, 0);
 
 					sceneGame.add( plane );
 
@@ -532,27 +540,44 @@ function SetupScene () {
 				// Enemy spawn
 
 				if (pixelData[0] == 255 && pixelData[1] == 60 && pixelData[2] == 60 && pixelData[3] == 255) {
-					var textureAmmoBox = THREE.ImageUtils.loadTexture('data/textures/DI_Target.png');
 
-					textureAmmoBox.magFilter = THREE.NearestFilter;
-					textureAmmoBox.minFilter = THREE.NearestFilter;
+					var texture = THREE.ImageUtils.loadTexture('data/sprites/enemy_seeker.png');
 
-					var material = new THREE.MeshLambertMaterial({
-						map: textureAmmoBox
-					});
-
-					var boxSize = 0.75;
-					var enemy = new THREE.Mesh( new THREE.BoxGeometry(boxSize, boxSize, boxSize), material );
-					enemy.position.set( x * UNITSIZE, 0, y * UNITSIZE );
-
-					enemies.push( enemy );
-
-					sceneGame.add( enemy );
+					createEnemy(x, y);
 				}
 			}
 		}
 	}
 
+}
+
+function rotateObject(obj, x, y, z) {
+	obj.rotation.x = x;
+	obj.rotation.y = y;
+	obj.rotation.z = z;
+}
+
+function calcRotation( obj, rotationX) {
+	var euler = new THREE.Euler( rotationX, 0, 0, 'XYZ' );
+	obj.position.applyEuler(euler);
+}
+
+function createEnemy(x, y) {
+	var loader = new THREE.JSONLoader();
+
+	loader.load( 'data/sprites/SM_EnemySeeker.js', function ( geometry ) {
+
+		var material = new THREE.MeshLambertMaterial({color: 0x55B663});
+
+		var mesh = new THREE.Mesh( geometry, material );
+
+		mesh.position.x = x * UNITSIZE;
+		mesh.position.z = y * UNITSIZE;
+
+		enemies.push( mesh );
+		sceneGame.add( mesh );
+
+	});
 }
 
 function onWindowResize() {
@@ -690,7 +715,7 @@ function updateEnemies () {
 	}
 
 	var pickupRotationSpeed = 1;
-	var distanceToPickup = 0.5;
+	var distanceToPickup = 2;
 	var ammoPerPickup = 12;
 
 	// Bob the weapon using a sine wave.
@@ -701,45 +726,24 @@ function updateEnemies () {
 
 	for (var i = 0; i < enemies.length; i++) {
 
-		var pickup = enemies[i];
-
-		// Spin the pickup.
-
-		//pickup.rotation.y += pickupRotationSpeed * delta;
-	//	pickup.position.y = baseY + Math.sin(clock.getElapsedTime() * speed) * magnitude;
+		var enemy = enemies[i];
 
 		var direction = new THREE.Vector3();
-		direction.subVectors(player.getObject().position, pickup.position);
+		direction.subVectors(player.getObject().position, enemy.position);
 		direction = direction.normalize();
 
-	//	direction = direction.normalize();
-
-	//	pickup.position.set( pickup.position.x + direction.x, pickup.position.y + direction.y, pickup.position.z + direction.z );
-		pickup.position.setX( pickup.position.x + direction.x * 1 * delta );
-		pickup.position.setY( pickup.position.y + direction.y * 1 * delta );
-		pickup.position.setZ( pickup.position.z + direction.z * 1 * delta );
-
-	//	pickup.lookAt( direction );
-
-		// Check distance between pickup and player, for picking up.
-
 		var a = player.getObject().position;
-		var b = pickup.position;
+		var b = enemy.position;
 
 		var distance = a.distanceTo( b );
 
-		// The player is close enough, pick it up.
+		enemy.lookAt( player.getObject().position );
 
-		if (distance <= distanceToPickup) {
+		if (distance >= distanceToPickup) {
 
-			sceneGame.remove( pickup );
-			pickups.splice( i, 1 );
-
-			weapon.addAmmo( ammoPerPickup );
-
-		//	var sound2 = new Sound([ 'data/sounds/pickup_ammo.wav' ], 64, 1);
-		//	sound2.position.copy( player.getObject().position );
-			//sound2.play();
+			enemy.position.setX( enemy.position.x + direction.x * 1 * delta );
+			enemy.position.setY( enemy.position.y + direction.y * 1 * delta );
+			enemy.position.setZ( enemy.position.z + direction.z * 1 * delta );
 
 		}
 
@@ -805,7 +809,7 @@ function updateWeapon () {
 	}
 
 	updateWeaponBobbing();
-		lightWeapon.intensity = 0;
+	lightWeapon.intensity = 0;
 
 	if (weapon.isFiring()) {
 		spriteWeapon.material.map = weaponSprites[1];
@@ -930,23 +934,23 @@ function createBullet () {
 
 		//	console.log(collision);
 
-			sceneGame.add(hitSphere);
+		sceneGame.add(hitSphere);
 
-			break;
-		}
+		break;
 	}
+}
 
-	var enemyHits = rayCaster.intersectObjects( enemies );
+var enemyHits = rayCaster.intersectObjects( enemies );
 
-	if (enemyHits.length > 0)
+if (enemyHits.length > 0)
+{
+	for (var i = 0; i < enemyHits.length; i++)
 	{
-		for (var i = 0; i < enemyHits.length; i++)
-		{
-			var collision = enemyHits[0];
+		var collision = enemyHits[0];
 
-			console.log( collision );
+		console.log( collision );
 
-			sceneGame.remove( collision.object );
+		sceneGame.remove( collision.object );
 			//enemies.splice( i, 1 );
 
 			break;

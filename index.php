@@ -86,7 +86,10 @@
 	<script src="js/three/libs/stats.min.js"></script>
 	<script src="js/three/core/Raycaster.js"></script>
 	<script src="js/three/misc/Detector.js"></script>
-
+	<script src="js/three/loaders/JSONLoader.js"></script>
+	<script src="js/three/loaders/ObjectLoader.js"></script>
+	<script src="js/three/loaders/ColladaLoader.js"></script>
+	
 	<!-- Library - Cannon.js -->
 	<script src="js/cannon/cannon.min.js"></script>
 	<script src="js/cannon/PointerLockControls.js"></script>

@@ -29,6 +29,8 @@ var FoV = 60;
 var CamNearPlane = 0.05;
 var CamFarPlane = 1000;
 
+var enemies = [];
+
 var pickups = [];
 
 var bullets = [];
@@ -336,7 +338,7 @@ function initialize() {
 
 	sound1 = new Sound([ 'data/music/d_e1m3.ogg' ], 64, 1);
 	sound1.position.copy( camera.position );
-	sound1.play();
+//	sound1.play();
 
 	raycaster[0] = new THREE.Raycaster( new THREE.Vector3(), new THREE.Vector3( 1, 0, 0 ), 0, 10 );
 }
@@ -540,12 +542,12 @@ function SetupScene () {
 					});
 
 					var boxSize = 0.75;
-					var healthCube = new THREE.Mesh( new THREE.BoxGeometry(boxSize, boxSize, boxSize), material );
-					healthCube.position.set(x * UNITSIZE, 0, y * UNITSIZE);
+					var enemy = new THREE.Mesh( new THREE.BoxGeometry(boxSize, boxSize, boxSize), material );
+					enemy.position.set( x * UNITSIZE, 0, y * UNITSIZE );
 
+					enemies.push( enemy );
 
-
-					sceneGame.add(healthCube);
+					sceneGame.add( enemy );
 				}
 			}
 		}
@@ -578,6 +580,8 @@ function update() {
 	requestAnimationFrame( update );
 
 	delta = clock.getDelta();
+
+	updateEnemies();
 
 	updatePickups();
 
@@ -679,6 +683,70 @@ function render () {
 
 }
 
+function updateEnemies () {
+
+	if (player == undefined) {
+		return;
+	}
+
+	var pickupRotationSpeed = 1;
+	var distanceToPickup = 0.5;
+	var ammoPerPickup = 12;
+
+	// Bob the weapon using a sine wave.
+
+	var baseY = -0.25;
+	var magnitude = 0.05;
+	var speed = 1;
+
+	for (var i = 0; i < enemies.length; i++) {
+
+		var pickup = enemies[i];
+
+		// Spin the pickup.
+
+		//pickup.rotation.y += pickupRotationSpeed * delta;
+	//	pickup.position.y = baseY + Math.sin(clock.getElapsedTime() * speed) * magnitude;
+
+		var direction = new THREE.Vector3();
+		direction.subVectors(player.getObject().position, pickup.position);
+		direction = direction.normalize();
+
+	//	direction = direction.normalize();
+
+	//	pickup.position.set( pickup.position.x + direction.x, pickup.position.y + direction.y, pickup.position.z + direction.z );
+		pickup.position.setX( pickup.position.x + direction.x * 1 * delta );
+		pickup.position.setY( pickup.position.y + direction.y * 1 * delta );
+		pickup.position.setZ( pickup.position.z + direction.z * 1 * delta );
+
+	//	pickup.lookAt( direction );
+
+		// Check distance between pickup and player, for picking up.
+
+		var a = player.getObject().position;
+		var b = pickup.position;
+
+		var distance = a.distanceTo( b );
+
+		// The player is close enough, pick it up.
+
+		if (distance <= distanceToPickup) {
+
+			sceneGame.remove( pickup );
+			pickups.splice( i, 1 );
+
+			weapon.addAmmo( ammoPerPickup );
+
+		//	var sound2 = new Sound([ 'data/sounds/pickup_ammo.wav' ], 64, 1);
+		//	sound2.position.copy( player.getObject().position );
+			//sound2.play();
+
+		}
+
+	}
+
+}
+
 function updatePickups () {
 
 	if (player == undefined) {
@@ -719,6 +787,10 @@ function updatePickups () {
 			pickups.splice( i, 1 );
 
 			weapon.addAmmo( ammoPerPickup );
+
+			var sound2 = new Sound([ 'data/sounds/pickup_ammo.wav' ], 64, 1);
+			sound2.position.copy( player.getObject().position );
+			sound2.play();
 
 		}
 
@@ -767,7 +839,7 @@ function updateWeapon () {
 
 function updateWeaponBobbing () {
 
-	var speed = 8;
+	var speed = 6;
 	var magnitude = 8;
 
 	// Bob the weapon up and down.
@@ -776,9 +848,9 @@ function updateWeaponBobbing () {
 
 	// When the player moves, sway the weapon left and right.
 
-	if (player.velocity >= 0.0005 || player.velocity <= -0.0005) {
+	if (player.Velocity() >= 0.0005 || player.Velocity() <= -0.0005) {
 
-		spriteWeapon.position.x = baseX + Math.sin(clock.getElapsedTime() * speed / 2) * (magnitude * 2);
+		spriteWeapon.position.x = baseX + Math.sin(clock.getElapsedTime() * (speed / 2)) * (magnitude * 2);
 
 	}
 
@@ -804,6 +876,10 @@ function updateBullets () {
 function createBullet () {
 
 	if (weapon == undefined) {
+		return;
+	}
+
+	if (!weapon.CanFire()) {
 		return;
 	}
 
@@ -852,13 +928,31 @@ function createBullet () {
 			var hitSphere = new THREE.Mesh( sphereGeo );
 			hitSphere.position.set(collision.point.x, collision.point.y, collision.point.z);
 
-			console.log(collision);
+		//	console.log(collision);
 
 			sceneGame.add(hitSphere);
 
 			break;
 		}
 	}
+
+	var enemyHits = rayCaster.intersectObjects( enemies );
+
+	if (enemyHits.length > 0)
+	{
+		for (var i = 0; i < enemyHits.length; i++)
+		{
+			var collision = enemyHits[0];
+
+			console.log( collision );
+
+			sceneGame.remove( collision.object );
+			//enemies.splice( i, 1 );
+
+			break;
+		}
+	}
+
 
 	sphere.owner = obj;
 

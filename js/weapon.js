@@ -14,6 +14,10 @@ Weapon = function () {
 	var isFire = false;
 	var isReload = false;
 
+	this.CanFire = function () {
+		return ammoCurrent > 0;
+	};
+
 	this.isFiring = function () {
 
 		return isFire;

@@ -41,6 +41,10 @@ Player = function ( camera ) {
 
 };
 
+this.Velocity = function() {
+	return velocity.x * velocity.x + velocity.y * velocity.y + velocity.z * velocity.z;
+};
+
 var onKeyDown = function ( event ) {
 
 	switch ( event.keyCode ) {

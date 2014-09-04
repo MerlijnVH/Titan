@@ -52,6 +52,8 @@ var materialWeaponShotgunReload;
 
 var weapon;
 
+var lightWeapon;
+
 var raycaster = [];
 
 var sceneGame, cameraScreen, sceneScreen;
@@ -277,6 +279,9 @@ function initialize() {
 	weapon = new Weapon();
 	weapon.initialize( hud );
 
+	lightWeapon = new THREE.PointLight( 0xe56d22, 2, 50 );
+	sceneGame.add( lightWeapon );
+
 	SetupScene();
 
 	// Setup sprites.
@@ -331,7 +336,7 @@ function initialize() {
 
 	sound1 = new Sound([ 'data/music/d_e1m3.ogg' ], 64, 1);
 	sound1.position.copy( camera.position );
-	//sound1.play();
+	sound1.play();
 
 	raycaster[0] = new THREE.Raycaster( new THREE.Vector3(), new THREE.Vector3( 1, 0, 0 ), 0, 10 );
 }
@@ -728,9 +733,11 @@ function updateWeapon () {
 	}
 
 	updateWeaponBobbing();
+		lightWeapon.intensity = 0;
 
 	if (weapon.isFiring()) {
 		spriteWeapon.material.map = weaponSprites[1];
+		lightWeapon.intensity = 2;
 
 		return;
 	} else {
@@ -793,6 +800,7 @@ function updateBullets () {
 
 }
 
+
 function createBullet () {
 
 	if (weapon == undefined) {
@@ -807,6 +815,12 @@ function createBullet () {
 	weapon.fire();
 
 	obj = player.getObject();
+
+	lightWeapon.position.copy( obj.position );
+
+	var sound2 = new Sound([ 'data/sounds/shotgun_fire.wav' ], 64, 1);
+	sound2.position.copy( obj.position );
+	sound2.play();
 
 	var sphere = new THREE.Mesh( sphereGeo );
 	sphere.position.set( obj.position.x, obj.position.y, obj.position.z );
@@ -848,9 +862,9 @@ function createBullet () {
 
 	sphere.owner = obj;
 
-	bullets.push(sphere);
+	//bullets.push(sphere);
 
-	sceneGame.add(sphere);
+	//sceneGame.add(sphere);
 
 	return sphere;
 

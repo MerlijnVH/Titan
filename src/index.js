@@ -75,11 +75,6 @@ var render = function () {
     velocity.x -= velocity.x * 6.0 * delta;
     velocity.y -= velocity.y * 4.0 * delta;
 
-    // if (moveForward) velocity.z -= speedMove * delta;
-    // if (moveBack) velocity.z += speedMove * delta;
-    // if (moveLeft) velocity.y += speedRotate * delta;
-    // if (moveRight) velocity.y -= speedRotate * delta;
-
     velocity.x += inputManager.moveVector.x * speedMove * delta;
     velocity.y += inputManager.moveVector.y * speedRotate * delta;
 
@@ -105,9 +100,9 @@ var render = function () {
     var newX = cube.position.x + Math.cos(angle) * moveDir;
     var newY = cube.position.y + Math.sin(angle) * moveDir;
 
-    // let update = checkCollision(posX, posY, newX, newY, 0.15);
+    let update = mapManager.checkCollision(posX, posY, newX, newY, 0.15);
 
-    // cube.position.set(update.x, update.y, cameraHeight);
+    cube.position.set(update.x, update.y, cameraHeight);
 
     // cube.rotation.z = moveRot;
     cube.rotateZ(moveRot); // YES
@@ -120,95 +115,6 @@ var render = function () {
     renderer.render(scene, camera);
 };
 
-var checkCollision = function (fromX, fromY, toX, toY, radius) {
-    // var pos = new THREE.Vector3(fromX, fromY, 0);
 
-    // if (toY < 0 || toY >= mapHeight || toX < 0 || toX >= mapWidth)
-    //     return pos;
-
-    // var blockX = Math.floor(toX);
-    // var blockY = Math.floor(toY);
-
-    // if (isBlocking(blockX, blockY)) {
-    //     return pos;
-    // }
-
-    // pos.x = toX;
-    // pos.y = toY;
-
-    // var blockTop = isBlocking(blockX, blockY - 1);
-    // var blockBottom = isBlocking(blockX, blockY + 1);
-    // var blockLeft = isBlocking(blockX - 1, blockY);
-    // var blockRight = isBlocking(blockX + 1, blockY);
-
-    // if (blockLeft != 0 && toX - blockX < radius) {
-    //     toX = pos.x = blockX + radius;
-    // }
-    // if (blockRight != 0 && blockX + 1 - toX < radius) {
-    //     toX = pos.x = blockX + 1 - radius;
-    // }
-    // if (blockTop != 0 && toY - blockY < radius) {
-    //     toY = pos.y = blockY + radius;
-    // }
-    // if (blockBottom != 0 && blockY + 1 - toY < radius) {
-    //     toY = pos.y = blockY + 1 - radius;
-    // }
-
-    //     // is tile to the bottom-left a wall
-    //     if (isBlocking(blockX - 1, blockY + 1) != 0 && !(blockBottom != 0 && blockBottom != 0)) {
-    //         var dx = toX - blockX;
-    //         var dy = toY - (blockY + 1);
-    //         if (dx * dx + dy * dy < radius * radius) {
-    //             if (dx * dx > dy * dy)
-    //                 toX = pos.x = blockX + radius;
-    //             else
-    //                 toY = pos.y = blockY + 1 - radius;
-    //         }
-    //     }
-    //     // is tile to the bottom-right a wall
-    //     if (isBlocking(blockX + 1, blockY + 1) != 0 && !(blockBottom != 0 && blockRight != 0)) {
-    //         var dx = toX - (blockX + 1);
-    //         var dy = toY - (blockY + 1);
-    //         if (dx * dx + dy * dy < radius * radius) {
-    //             if (dx * dx > dy * dy)
-    //                 toX = pos.x = blockX + 1 - radius;
-    //             else
-    //                 toY = pos.y = blockY + 1 - radius;
-    //         }
-    //     }
-    // // is tile to the top-left a wall
-    // if (isBlocking(blockX - 1, blockY - 1) != 0 && !(blockTop != 0 && blockLeft != 0)) {
-    //     var dx = toX - blockX;
-    //     var dy = toY - blockY;
-    //     if (dx * dx + dy * dy < radius * radius) {
-    //         if (dx * dx > dy * dy)
-    //             toX = pos.x = blockX + radius;
-    //         else
-    //             toY = pos.y = blockY + radius;
-    //     }
-    // }
-    // // is tile to the top-right a wall
-    // if (isBlocking(blockX + 1, blockY - 1) != 0 && !(blockTop != 0 && blockRight != 0)) {
-    //     var dx = toX - (blockX + 1);
-    //     var dy = toY - blockY;
-    //     if (dx * dx + dy * dy < radius * radius) {
-    //         if (dx * dx > dy * dy)
-    //             toX = pos.x = blockX + 1 - radius;
-    //         else
-    //             toY = pos.y = blockY + radius;
-    //     }
-    // }
-
-    // return pos;
-};
-
-var isBlocking = function (x, y) {
-    // // first make sure that we cannot move outside the boundaries of the level
-    // if (y < 0 || y >= mapHeight || x < 0 || x >= mapWidth)
-    //     return true;
-
-    // // return true if the map block is not 0, ie. if there is a blocking wall.
-    // return (map[Math.floor(y)][Math.floor(x)] != 0);
-}
 
 render();

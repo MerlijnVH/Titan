@@ -3,6 +3,10 @@ export default class Entity {
         this.name = name;
     }
 
+    update(delta) {
+
+    }
+
     getName() {
         return this.name;
     }

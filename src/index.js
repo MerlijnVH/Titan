@@ -6,6 +6,7 @@ import Player from './modules/Player';
 
 const sceneManager = new SceneManager();
 
+const inputManager = new InputManager(document);
 const mapManager = new MapManager(sceneManager.scene);
 
 let scene = sceneManager.scene;
@@ -13,10 +14,6 @@ let scene = sceneManager.scene;
 var texture = new THREE.TextureLoader().load('assets/textures/wall0.png');
 texture.magFilter = THREE.NearestFilter;
 var materialWall = new THREE.MeshBasicMaterial({ map: texture });
-
-const keyboard = {};
-
-// Using strings only to keep the array visually the same width
 
 
 
@@ -30,106 +27,11 @@ var renderer = new THREE.WebGLRenderer();
 renderer.setSize(width, height);
 document.body.appendChild(renderer.domElement);
 
-var moveVector = new THREE.Vector3();
+
 
 const playerSize = 1;
 
 
-setupKeyControls();
-
-
-function setupKeyControls() {
-    document.onkeyup = function (e) {
-        switch (e.keyCode) {
-            case 37:
-                moveLeft = false;
-                moveVector.y = 0;
-                break;
-            case 39:
-                moveRight = false;
-                moveVector.y = 0;
-                break;
-            case 38:
-                moveForward = false;
-                moveVector.x = 0;
-                break;
-            case 40:
-                moveBack = false;
-                moveVector.x = 0;
-                break;
-        }
-    };
-
-    document.onkeydown = function (e) {
-        switch (e.keyCode) {
-            case 37:
-                moveLeft = true;
-                moveVector.y = 1;
-                break;
-            case 39:
-                moveRight = true;
-                moveVector.y = -1;
-                break;
-            case 38:
-                moveForward = true;
-                moveVector.x = -1;
-                break;
-            case 40:
-                moveBack = true;
-                moveVector.x = 1;
-                break;
-        }
-    };
-
-    // Mouse
-
-    document.onmousemove = function (e) {
-        // console.log(e.clientY);
-
-        if (e.clientX < 50) {
-            camY = 1;
-        }
-    }
-
-    document.addEventListener('mousemove', function (ev) {
-        // document.getElementById('mX').innerHTML = ev.clientX.toString();
-        // document.getElementById('mY').innerHTML = ev.clientY.toString();
-
-        // if (xPrev === -1 && yPrev === -1) {
-        //     xPrev = ev.clientX;
-        //     yPrev = ev.clientY;
-        // }
-        // if (ev.clientX < 50) {
-        //     camY = 1;
-        //     keepGoing = true;
-        // } else if (ev.clientX > window.innerWidth - 50) {
-        //     camY = -1;
-        //     keepGoing = true;
-        // } else {
-        //     keepGoing = false;
-        //     if (xPrev < ev.clientX) {
-        //         camY = -1;
-        //     } else if (xPrev > ev.clientX) {
-        //         camY = 1;
-        //     }
-        //     if (yPrev < ev.clientY) {
-        //         camX = -1;
-        //     } else if (yPrev > ev.clientY) {
-        //         camX = 1;
-        //     }
-        // }
-        // xPrev = ev.clientX;
-        // yPrev = ev.clientY;
-    });
-    // document.addEventListener('mouseout', function () {
-    //     camX = camY = 0;
-    // });
-    // document.addEventListener('keypress', function (ev) {
-    //     if (ev.which === 114) {
-    //         camReset = true;
-    //     }
-    // });
-}
 
 var velocity = new THREE.Vector3;
 var prevTime = performance.now();
@@ -178,8 +80,8 @@ var render = function () {
     // if (moveLeft) velocity.y += speedRotate * delta;
     // if (moveRight) velocity.y -= speedRotate * delta;
 
-    velocity.x += moveVector.x * speedMove * delta;
-    velocity.y += moveVector.y * speedRotate * delta;
+    velocity.x += inputManager.moveVector.x * speedMove * delta;
+    velocity.y += inputManager.moveVector.y * speedRotate * delta;
 
     // var _velocity = new THREE.Vector3(velocity.x, velocity.y, velocity.z);
 

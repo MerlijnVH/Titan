@@ -204,5 +204,5 @@ export default class MapManager {
         }
 
         return position;
-    };
+    }
 }

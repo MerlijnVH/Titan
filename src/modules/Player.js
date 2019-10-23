@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import Entity from './Entity';
 
 export default class Player extends Entity {
-    constructor(name, scene, camera, inputManager, mapManager) {
+    constructor(name, x, y, scene, camera, inputManager, mapManager) {
         super(name, 'car');
 
         this.inputManager = inputManager;
@@ -17,8 +17,8 @@ export default class Player extends Entity {
         const cube = new THREE.Mesh(geometry, material);
 
         scene.add(cube);
-        cube.position.x = 8;
-        cube.position.y = 8;
+        cube.position.x = x;
+        cube.position.y = y;
         cube.position.z = 0.5;
 
         this.cube = cube;

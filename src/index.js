@@ -5,9 +5,11 @@ import MapManager from './modules/MapManager';
 import Player from './modules/Player';
 
 const sceneManager = new SceneManager();
-
 const inputManager = new InputManager(document);
 const mapManager = new MapManager(sceneManager.scene);
+
+const clock = new THREE.Clock();
+let delta = 0;
 
 let scene = sceneManager.scene;
 
@@ -28,25 +30,20 @@ camera.position.z = 0;
 camera.rotateZ(45 * (Math.PI / 2));
 camera.rotateX(45 * (Math.PI / 2));
 
-const player = new Player('Player', sceneManager.scene, camera, inputManager, mapManager);
+const player = new Player('Player', 8, 8, sceneManager.scene, camera, inputManager, mapManager);
 
 var renderer = new THREE.WebGLRenderer();
 renderer.setSize(width, height);
 document.body.appendChild(renderer.domElement);
 
-let prevTime = performance.now();
-
-var render = function () {
+function render() {
     requestAnimationFrame(render);
 
-    var time = performance.now();
-    var delta = (time - prevTime) / 1000;
+    delta = clock.getDelta();
 
     player.update(delta);
 
-    prevTime = time;
-
     renderer.render(scene, camera);
-};
+}
 
 render();

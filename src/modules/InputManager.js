@@ -1,16 +1,30 @@
 import * as THREE from 'three';
+import { runInThisContext } from 'vm';
 
 export default class InputManager {
     constructor(document) {
         this.document = document;
 
         this.moveVector = new THREE.Vector2();
+        this.mouseVector = new THREE.Vector2();
+
+        this.mouseSensitivity = 0.005;
 
         this.setupKeyControls(document);
+        this.setupMouseControls(document);
+        
+        this.document.addEventListener('focus', event => {
+
+        });
+
+        this.document.addEventListener('blur', event => {
+            this.moveVector = new THREE.Vector2();
+            this.mouseVector = new THREE.Vector2();
+        });
     }
 
-    setupKeyControls() {
-        this.document.addEventListener('keydown', event => {
+    setupKeyControls(document) {
+        document.addEventListener('keydown', event => {
             switch (event.keyCode) {
                 case 37:
                     this.moveVector.y = 1;
@@ -27,7 +41,7 @@ export default class InputManager {
             }
         });
 
-        this.document.addEventListener('keyup', event => {
+        document.addEventListener('keyup', event => {
             switch (event.keyCode) {
                 case 37:
                     this.moveVector.y = 0;
@@ -42,6 +56,31 @@ export default class InputManager {
                     this.moveVector.x = 0;
                     break;
             }
+        });
+    }
+
+    setupMouseControls(document) {
+        document.addEventListener('mousemove', event => {
+            if (event.clientX > this.mouseVector.x) {
+                this.moveVector.y -= this.mouseSensitivity;
+            } else {
+                this.moveVector.y += this.mouseSensitivity;
+            }
+
+            this.mouseVector.x = event.clientX;
+            this.mouseVector.y = event.clientY;
+        });
+
+        document.addEventListener('mousedown', event => {
+
+        });
+
+        document.addEventListener('mouseup', event => {
+
+        });
+
+        document.addEventListener('mousewheel', event => {
+
         });
     }
 }

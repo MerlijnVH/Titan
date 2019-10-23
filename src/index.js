@@ -3,6 +3,7 @@ import SceneManager from './modules/SceneManager';
 import InputManager from './modules/InputManager';
 import MapManager from './modules/MapManager';
 import Player from './modules/Player';
+import Enemy from './modules/Enemy';
 
 const sceneManager = new SceneManager();
 const inputManager = new InputManager(document);
@@ -31,6 +32,8 @@ camera.rotateZ(45 * (Math.PI / 2));
 camera.rotateX(45 * (Math.PI / 2));
 
 const player = new Player('Player', 8, 8, sceneManager.scene, camera, inputManager, mapManager);
+
+const enemy = new Enemy('Duder', 8, 10, sceneManager.scene, mapManager);
 
 var renderer = new THREE.WebGLRenderer();
 renderer.setSize(width, height);

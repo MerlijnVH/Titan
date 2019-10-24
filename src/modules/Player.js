@@ -10,7 +10,7 @@ export default class Player extends Entity {
 
         this.playerSize = 1;
         this.playerRadius = 0.15;
-        this.playerHeight = 0.75;
+        this.playerHeight = 0.6;
 
         const geometry = new THREE.PlaneGeometry(this.playerSize, this.playerSize, this.playerSize);
         const material = new THREE.MeshLambertMaterial();

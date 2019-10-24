@@ -37,6 +37,10 @@ export default class MapManager {
 
         const map = this.map;
 
+        this.geometryFloor = new THREE.Geometry();
+        this.geometryCeiling = new THREE.Geometry();
+        this.geometryWall = new THREE.Geometry();
+
         for (var y = 0; y < this.mapHeight; y++) {
             for (var x = 0; x < this.mapWidth; x++) {
                 const mapData = map[y][x];
@@ -69,10 +73,12 @@ export default class MapManager {
 
                 if (mapData == 0) {
                     this.createFloor(x, y);
+                    this.createCeiling(x, y);
                 }
 
                 if (mapData == 9) {
                     this.createFloor(x, y);
+                    this.createCeiling(x, y);
                 }
 
                 if (mapData != 0) {
@@ -80,6 +86,21 @@ export default class MapManager {
                 }
             }
         }
+
+        let texture = this.createTexture('assets/textures/floor0.png');
+        let material = new THREE.MeshBasicMaterial({ map: texture });
+
+        const meshFloor = new THREE.Mesh(this.geometryFloor, material);
+        this.scene.add(meshFloor);
+
+        const meshCeiling = new THREE.Mesh(this.geometryCeiling, material);
+        this.scene.add(meshCeiling);
+
+        texture = this.createTexture('assets/textures/wall0.png');
+        material = new THREE.MeshBasicMaterial({ map: texture });
+
+        const meshWall = new THREE.Mesh(this.geometryWall, material);
+        this.scene.add(meshWall);
     }
 
     isWithinBounds(x, y) {
@@ -98,26 +119,94 @@ export default class MapManager {
         return (this.map[Math.floor(y)][Math.floor(x)] != 0);
     }
 
+    createTexture(path) {
+        const texture = new THREE.TextureLoader().load(path);
+        texture.magFilter = THREE.NearestFilter;
+        texture.minFilter = THREE.NearestFilter;
+        // texture.generateMipmaps = false;
+        // texture.anisotropy = 0;
+
+        return texture;
+    }
+
     createFloor(x, y) {
         const geometry = new THREE.PlaneGeometry(1, 1, 1);
-        const material = new THREE.MeshNormalMaterial();
-        const cube = new THREE.Mesh(geometry, material);
-        this.scene.add(cube);
 
+        const cube = new THREE.Mesh(geometry);
         cube.position.x = x * this.mapTileSize + (this.mapTileSize / 2);
         cube.position.y = y * this.mapTileSize + (this.mapTileSize / 2);
         cube.position.z = 0;
+        cube.updateMatrix();
+
+        this.geometryFloor.merge(cube.geometry, cube.matrix);
+    }
+
+    createCeiling(x, y) {
+        const geometry = new THREE.PlaneGeometry(1, 1, 1);
+
+        const cube = new THREE.Mesh(geometry);
+        cube.position.x = x * this.mapTileSize + (this.mapTileSize / 2);
+        cube.position.y = y * this.mapTileSize + (this.mapTileSize / 2);
+        cube.position.z = this.mapTileSize;
+        cube.rotation.x = (Math.PI / 2) * 90;
+        cube.updateMatrix();
+
+        this.geometryCeiling.merge(cube.geometry, cube.matrix);
     }
 
     createBlock(x, y) {
-        const geometry = new THREE.BoxGeometry(1, 1, 1);
-        const material = new THREE.MeshNormalMaterial();
-        const cube = new THREE.Mesh(geometry, material);
-        this.scene.add(cube);
+        const geometry = new THREE.PlaneGeometry(1, 1, 1);
 
-        cube.position.x = x * this.mapTileSize + (this.mapTileSize / 2);
-        cube.position.y = y * this.mapTileSize + (this.mapTileSize / 2);
-        cube.position.z = (this.mapTileSize / 2);
+        const wallTop = new THREE.Mesh(geometry);
+        wallTop.position.x = x * this.mapTileSize + this.mapTileSize;
+        wallTop.position.y = y * this.mapTileSize + (this.mapTileSize / 2);
+        wallTop.position.z = (this.mapTileSize / 2);
+
+        wallTop.rotation.x = (Math.PI / 2);
+        wallTop.rotation.y = (Math.PI / 2);
+        wallTop.rotation.z = 0;
+        wallTop.updateMatrix();
+
+        this.geometryWall.merge(wallTop.geometry, wallTop.matrix);
+
+        const wallBottom = new THREE.Mesh(geometry);
+
+        wallBottom.position.x = x * this.mapTileSize;
+        wallBottom.position.y = y * this.mapTileSize + (this.mapTileSize / 2);
+        wallBottom.position.z = (this.mapTileSize / 2);
+
+        wallBottom.rotation.x = (Math.PI / 2);
+        wallBottom.rotation.y = -(Math.PI / 2);
+        wallBottom.rotation.z = 0;
+        wallBottom.updateMatrix();
+
+        this.geometryWall.merge(wallBottom.geometry, wallBottom.matrix);
+
+        const wallRight = new THREE.Mesh(geometry);
+
+        wallRight.position.x = x * this.mapTileSize + (this.mapTileSize / 2);
+        wallRight.position.y = y * this.mapTileSize + this.mapTileSize;
+        wallRight.position.z = (this.mapTileSize / 2);
+
+        wallRight.rotation.x = (Math.PI / 2);
+        wallRight.rotation.y = (Math.PI / 2) * 90;
+        wallRight.rotation.z = 0;
+        wallRight.updateMatrix();
+
+        this.geometryWall.merge(wallRight.geometry, wallRight.matrix);
+
+        const wallLeft = new THREE.Mesh(geometry);
+
+        wallLeft.position.x = x * this.mapTileSize + (this.mapTileSize / 2);
+        wallLeft.position.y = y * this.mapTileSize;
+        wallLeft.position.z = (this.mapTileSize / 2);
+
+        wallLeft.rotation.x = (Math.PI / 2);
+        wallLeft.rotation.y = (Math.PI / 2) * 180;
+        wallLeft.rotation.z = 0;
+        wallLeft.updateMatrix();
+
+        this.geometryWall.merge(wallLeft.geometry, wallLeft.matrix);
     }
 
     checkCollision(fromX, fromY, toX, toY, radius) {

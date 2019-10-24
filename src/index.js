@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import * as Stats from 'stats.js';
 import SceneManager from './modules/SceneManager';
 import InputManager from './modules/InputManager';
 import MapManager from './modules/MapManager';
@@ -13,10 +14,6 @@ const clock = new THREE.Clock();
 let delta = 0;
 
 let scene = sceneManager.scene;
-
-var texture = new THREE.TextureLoader().load('assets/textures/wall0.png');
-texture.magFilter = THREE.NearestFilter;
-var materialWall = new THREE.MeshBasicMaterial({ map: texture });
 
 let width = window.innerWidth;
 let height = window.innerHeight;
@@ -35,18 +32,26 @@ const player = new Player('Player', 8, 8, sceneManager.scene, camera, inputManag
 
 const enemy = new Enemy('Duder', 8, 10, sceneManager.scene, mapManager);
 
-var renderer = new THREE.WebGLRenderer();
+const renderer = new THREE.WebGLRenderer();
 renderer.setSize(width, height);
 document.body.appendChild(renderer.domElement);
 
+const stats = new Stats();
+stats.showPanel(0);
+document.body.appendChild(stats.dom);
+
 function render() {
-    requestAnimationFrame(render);
+    stats.begin();
 
     delta = clock.getDelta();
 
     player.update(delta);
 
     renderer.render(scene, camera);
+
+    stats.end();
+
+    requestAnimationFrame(render);
 }
 
 render();

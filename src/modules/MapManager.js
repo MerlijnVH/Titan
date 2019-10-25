@@ -93,6 +93,9 @@ export default class MapManager {
         const meshFloor = new THREE.Mesh(this.geometryFloor, material);
         this.scene.add(meshFloor);
 
+        texture = this.createTexture('assets/textures/ceil0.png');
+        material = new THREE.MeshBasicMaterial({ map: texture });
+
         const meshCeiling = new THREE.Mesh(this.geometryCeiling, material);
         this.scene.add(meshCeiling);
 

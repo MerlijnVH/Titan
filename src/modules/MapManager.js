@@ -106,6 +106,19 @@ export default class MapManager {
         this.scene.add(meshWall);
     }
 
+    getMapToWorldPosition(x, y) {
+        x = Math.floor(x);
+        y = Math.floor(y);
+
+        const position = new THREE.Vector3(x + (this.mapTileSize / 2), y + (this.mapTileSize / 2), 0);
+
+        return position;
+    }
+
+    getWorldToMapPosition(position) {
+
+    }
+
     isWithinBounds(x, y) {
         if (x >= 0 && x < this.mapWidth && y >= 0 && y < this.mapHeight) {
             return true;

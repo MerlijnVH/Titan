@@ -3,13 +3,13 @@ import Entity from './Entity';
 
 export default class Player extends Entity {
     constructor(name, x, y, scene, camera, inputManager, mapManager) {
-        super(name, 'car');
+        super(name, 'Player');
 
         this.inputManager = inputManager;
         this.mapManager = mapManager;
 
         this.playerSize = 1;
-        this.playerRadius = 0.15;
+        this.playerRadius = 0.25;
         this.playerHeight = 0.6;
 
         const geometry = new THREE.PlaneGeometry(this.playerSize, this.playerSize, this.playerSize);
@@ -24,8 +24,6 @@ export default class Player extends Entity {
         this.cube = cube;
 
         cube.add(camera);
-
-        this.velocity = new THREE.Vector3;
 
         this.speedMove = 0.15;
         this.speedRotate = 0.05;
@@ -57,9 +55,8 @@ export default class Player extends Entity {
         this.cube.position.set(update.x, update.y, this.playerHeight);
     
         this.cube.rotateZ(this.moveRot);
-    }
 
-    getName() {
-        return 'It is a car: ' + super.getName();
+        this.PositionX = this.cube.position.x;
+        this.PositionY = this.cube.position.y;
     }
 }

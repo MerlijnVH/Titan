@@ -46,6 +46,9 @@ function render() {
     delta = clock.getDelta();
 
     player.update(delta);
+    enemy.update(delta);
+
+    enemy.GoTo(mapManager.getMapToWorldPosition(player.PositionX + 1, player.PositionY));
 
     renderer.render(scene, camera);
 

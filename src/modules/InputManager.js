@@ -60,6 +60,8 @@ export default class InputManager {
     }
 
     setupMouseControls(document) {
+        return;
+        
         document.addEventListener('mousemove', event => {
             if (event.clientX > this.mouseVector.x) {
                 this.moveVector.y -= this.mouseSensitivity;

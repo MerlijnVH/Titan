@@ -14,10 +14,18 @@ export default class Enemy extends Entity {
         const material = new THREE.MeshNormalMaterial();
         const cube = new THREE.Mesh(geometry, material);
 
+        this.speedMove = 0.05;
+        this.speedRotate = 0.05;
+
         scene.add(cube);
         cube.position.x = x;
         cube.position.y = y;
         cube.position.z = 0.5;
+
+        this.cube = cube;
+
+        this.position = cube.position;
+        this.destination = new THREE.Vector3();
 
         // this.cube = cube;
 
@@ -31,28 +39,26 @@ export default class Enemy extends Entity {
     }
 
     update(delta) {
-        // this.velocity.x -= this.velocity.x * 6.0 * delta;
-        // this.velocity.y -= this.velocity.y * 4.0 * delta;
+        this.velocity.x -= this.velocity.x * 6.0 * delta;
+        this.velocity.y -= this.velocity.y * 4.0 * delta;
 
-        // this.velocity.x += this.inputManager.moveVector.x * this.speedMove * delta;
-        // this.velocity.y += this.inputManager.moveVector.y * this.speedRotate * delta;
+        if (this.destination.x && this.destination.y) {
+            let direction = new THREE.Vector3();
 
-        // this.moveDir = this.velocity.x;
-        // this.moveRot = this.velocity.y;
+            direction.subVectors(this.destination, this.cube.position).normalize();
 
-        // let posX = this.cube.position.x;
-        // let posY = this.cube.position.y;
+            this.velocity.x += direction.x * this.speedMove * delta;
+            this.velocity.y += direction.y * this.speedMove * delta;
 
-        // let angle = this.cube.rotation.z;
-    
-        // let newX = this.cube.position.x + Math.cos(angle) * this.moveDir;
-        // let newY = this.cube.position.y + Math.sin(angle) * this.moveDir;
-    
-        // let update = this.mapManager.checkCollision(posX, posY, newX, newY, this.playerRadius);
-    
-        // this.cube.position.set(update.x, update.y, this.playerHeight);
-    
-        // this.cube.rotateZ(this.moveRot);
+            let newX = this.cube.position.x + this.velocity.x;
+            let newY = this.cube.position.y + this.velocity.y;
+
+            this.cube.position.set(newX, newY, this.playerHeight / 2);
+        }
+    }
+
+    GoTo(position) {
+        this.destination = new THREE.Vector3(position.x, position.y, 0);
     }
 
     getName() {

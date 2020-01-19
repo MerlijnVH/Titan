@@ -4,6 +4,7 @@ import Entity from './Entity';
 export default class Enemy extends Entity {
     constructor(name, x, y, scene, mapManager) {
         super(name, 'car');
+        super(scene, scene);
 
         // this.mapManager = mapManager;
 
@@ -13,6 +14,8 @@ export default class Enemy extends Entity {
         const geometry = new THREE.BoxGeometry(this.playerRadius, this.playerRadius, this.playerHeight);
         const material = new THREE.MeshNormalMaterial();
         const cube = new THREE.Mesh(geometry, material);
+
+        cube.name = 'Enemy';
 
         this.speedMove = 0.05;
         this.speedRotate = 0.05;
@@ -63,5 +66,19 @@ export default class Enemy extends Entity {
 
     getName() {
         return 'It is a car: ' + super.getName();
+    }
+
+    Hurt(damage) {
+        this.Health -= damage;
+
+        if (this.Health <= 0) {
+            this.Health = 0;
+
+            console.log('removing!');
+
+            this.scene.remove(this.cube);
+        }
+
+        console.log(this.Health);
     }
 }

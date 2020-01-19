@@ -30,9 +30,13 @@ export default class Player extends Entity {
 
         this.moveDir = 0;
         this.moveRot = 0;
+
+        this.previousMoveVector = new THREE.Vector2();
     }
 
     update(delta) {
+        this.previousMoveVector = this.inputManager.moveVector;
+
         this.velocity.x -= this.velocity.x * 6.0 * delta;
         this.velocity.y -= this.velocity.y * 4.0 * delta;
 
